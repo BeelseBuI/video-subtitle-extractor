@@ -54,15 +54,25 @@
 
 ### Download, translate and burn subtitles
 
-Use the helper script to fetch two videos, translate the subtitles and burn them into a clean video. The script requires **yt-dlp**, **ffmpeg** and the [`chatgpt-subtitle-translator`](https://github.com/Cerlancism/chatgpt-subtitle-translator) project. Ensure the tools are installed and `OPENAI_API_KEY` is set.
+Use the helper script to **search** for the original video and a version with hardcoded subtitles based on a given title, translate the subtitles and burn them into the clean video. The script requires **yt-dlp**, **ffmpeg** and the [`chatgpt-subtitle-translator`](https://github.com/Cerlancism/chatgpt-subtitle-translator) project. Ensure the tools are installed and `OPENAI_API_KEY` is set.
+
+The helper tries different search variations (removing non-Latin characters, appending `sub/eng sub/sub español` etc.) to find the first subtitled video. It automatically infers the subtitle language from the video's title (for example, titles starting with `[ENG]` or `[Sub Español]`) and estimates the subtitle region based on video resolution. For a 1080p video, the default region is `843 1070 0 1920`.
 
 ```bash
-python scripts/translate_burn.py <subtitled_video_url> <clean_video_url> output.mp4
+python scripts/translate_burn.py "140327 슈가&지민, 제이홉&뷔&정국, 랩몬&진" output.mp4
 ```
 
 By default, temporary files are saved under `work/`. Use the `--workdir` option to change this location.
 
+To automatically send the resulting video to a Telegram user, supply the `--telegram-token` and `--telegram-chat-id` options.
 
+You can also run the entire workflow through a tiny web interface. Start the server:
+
+```bash
+python scripts/web_server.py --output output.mp4
+```
+
+Then open <http://127.0.0.1:5000> in your browser and enter the video title to begin processing. Other settings (output path, working directory, Telegram parameters) can be adjusted via command-line options before launching the server.
 
 - Directly download the compressed package, unzip it and run it. If it cannot run, follow the tutorial below and try to install the Conda environment and run it using the source code.
 

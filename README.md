@@ -227,8 +227,8 @@ cd <源码所在目录>
 
   # 例如:
   # requirements_coreml.txt
-  #   paddle2onnx==1.3.1
-  #   onnxruntime-gpu==1.20.1
+  #   paddle2onnx==2.0.1
+  #   onnxruntime-gpu==1.22.0
   #   onnxruntime-coreml==1.13.1
 
   pip install -r requirements_coreml.txt

@@ -56,6 +56,17 @@ Video-subtitle-extractor (VSE) 是一款将视频中的硬字幕提取为外挂�
 
 > 这样就可以把文本中出现的所有“威筋”替换为“威胁”，所有的“性感荷官在线发牌”文本删除
 
+### 下载、翻译并烧录字幕
+
+仓库提供了一个辅助脚本，可以自动完成下载两个视频、翻译字幕并将其烧录到无字幕视频中。该脚本依赖 **yt-dlp**、**ffmpeg** 以及 [`chatgpt-subtitle-translator`](https://github.com/Cerlancism/chatgpt-subtitle-translator) 项目，需要提前安装这些工具并设置 `OPENAI_API_KEY`。
+
+```bash
+python scripts/translate_burn.py <含字幕视频链接> <无字幕视频链接> output.mp4
+```
+
+临时文件默认保存在 `work/` 目录，可通过 `--workdir` 参数修改。
+
+
 - 视频以及程序路径请**不要带中文和空格**，否则可能出现未知错误！！！
 
  > 如：以下存放视频和代码的路径都不行

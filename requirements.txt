@@ -14,3 +14,4 @@ shapely==2.1.1
 six==1.17.0
 setuptools==80.9.0
 je-paddleocr==2.9.1
+yt-dlp==2025.1.26

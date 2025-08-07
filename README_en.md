@@ -73,6 +73,12 @@ python scripts/web_server.py --output output.mp4
 ```
 
 Then open <http://127.0.0.1:5000> in your browser and enter the video title to begin processing. Other settings (output path, working directory, Telegram parameters) can be adjusted via command-line options before launching the server.
+A small graphical launcher `scripts/host_gui.py` is also available. It installs required dependencies, lets you save the configuration and start the server with one click. To build a standalone Windows executable:
+
+```bash
+pip install pyinstaller
+pyinstaller --onefile scripts/host_gui.py
+```
 
 - Directly download the compressed package, unzip it and run it. If it cannot run, follow the tutorial below and try to install the Conda environment and run it using the source code.
 

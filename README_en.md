@@ -52,6 +52,17 @@
 
 > In this way, you can replace all occurrences of "威筋" in the text with "threat" and delete all instances of the text "性感荷官在线发牌".
 
+### Download, translate and burn subtitles
+
+Use the helper script to fetch two videos, translate the subtitles and burn them into a clean video. The script requires **yt-dlp**, **ffmpeg** and the [`chatgpt-subtitle-translator`](https://github.com/Cerlancism/chatgpt-subtitle-translator) project. Ensure the tools are installed and `OPENAI_API_KEY` is set.
+
+```bash
+python scripts/translate_burn.py <subtitled_video_url> <clean_video_url> output.mp4
+```
+
+By default, temporary files are saved under `work/`. Use the `--workdir` option to change this location.
+
+
 
 - Directly download the compressed package, unzip it and run it. If it cannot run, follow the tutorial below and try to install the Conda environment and run it using the source code.
 
@@ -209,8 +220,8 @@ This project supports four runtime modes: CUDA (NVIDIA GPU acceleration), CPU (n
 
   # Example:
   # requirements_coreml.txt
-  #   paddle2onnx==1.3.1
-  #   onnxruntime-gpu==1.20.1
+  #   paddle2onnx==2.0.1
+  #   onnxruntime-gpu==1.22.0
   #   onnxruntime-coreml==1.13.1
 
   pip install -r requirements_coreml.txt

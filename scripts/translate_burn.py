@@ -2,6 +2,7 @@ import argparse
 import re
 import subprocess
 from pathlib import Path
+import os
 
 import requests
 
@@ -61,8 +62,12 @@ SUB_KEYWORDS = [
 
 
 def search_sub_video(title: str, output: Path) -> str:
-    """Search various variations of *title* for a subtitled video and download it."""
+    """Search various variations of *title* for a subtitled video and download it.
+
+    Skips results that match the original title to avoid downloading the same clean video twice.
+    """
     bases = [title]
+    original = _get_title(title)
     sanitized = _strip_non_latin(title).strip()
     if sanitized and sanitized != title:
         bases.append(sanitized)
@@ -75,7 +80,7 @@ def search_sub_video(title: str, output: Path) -> str:
 
     for query in queries:
         found = _get_title(query)
-        if found:
+        if found and found != original:
             _download(query, output)
             return found
     raise RuntimeError("No subtitled video found")
@@ -91,18 +96,23 @@ def download_clean_video(title: str, output: Path) -> None:
 
 def get_resolution(video: Path) -> tuple[int, int]:
     """Return video width and height using ffprobe."""
-    res = subprocess.run([
-        "ffprobe",
-        "-v",
-        "error",
-        "-select_streams",
-        "v:0",
-        "-show_entries",
-        "stream=width,height",
-        "-of",
-        "csv=s=x:p=0",
-        str(video),
-    ], capture_output=True, text=True, check=True)
+    if not video.exists():
+        raise FileNotFoundError(f"{video} does not exist")
+    try:
+        res = subprocess.run([
+            "ffprobe",
+            "-v",
+            "error",
+            "-select_streams",
+            "v:0",
+            "-show_entries",
+            "stream=width,height",
+            "-of",
+            "csv=s=x:p=0",
+            str(video),
+        ], capture_output=True, text=True, check=True)
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"ffprobe failed: {e.stderr}") from e
     width, height = map(int, res.stdout.strip().split("x"))
     return width, height
 
@@ -198,6 +208,8 @@ def process(
     workdir: Path,
     telegram_token: str | None = None,
     telegram_chat_id: str | None = None,
+    openai_api_key: str | None = None,
+    openai_api_base: str | None = None,
 ) -> None:
     """Run the full download/translate/burn pipeline for *title*."""
     workdir.mkdir(parents=True, exist_ok=True)
@@ -210,6 +222,10 @@ def process(
     download_clean_video(title, clean_video)
 
     lang = detect_language(sub_title)
+    if openai_api_key:
+        os.environ["OPENAI_API_KEY"] = openai_api_key
+    if openai_api_base:
+        os.environ["OPENAI_API_BASE"] = openai_api_base
     extract_subtitles(sub_video, raw_srt)
     translate_subtitles(raw_srt, translated_srt, lang)
     burn_subtitles(clean_video, translated_srt, output)
@@ -229,6 +245,8 @@ def main():
     parser.add_argument("--workdir", default="work", help="Working directory for intermediate files")
     parser.add_argument("--telegram-token", help="Telegram bot token")
     parser.add_argument("--telegram-chat-id", help="Telegram chat ID to send the video to")
+    parser.add_argument("--openai-api-key", help="OpenAI API key")
+    parser.add_argument("--openai-api-base", help="OpenAI API base URL")
     args = parser.parse_args()
 
     process(
@@ -237,6 +255,8 @@ def main():
         Path(args.workdir),
         args.telegram_token,
         args.telegram_chat_id,
+        args.openai_api_key,
+        args.openai_api_base,
     )
 
 

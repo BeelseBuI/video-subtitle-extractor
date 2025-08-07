@@ -36,6 +36,10 @@ class SubtitleExtractorGUI:
         self.interface_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'backend', 'interface',
                                            f"{self.INTERFACE_KEY_NAME_MAP[self.config['DEFAULT']['Interface']]}.ini")
         self.interface_config.read(self.interface_file, encoding='utf-8')
+        if 'OpenAI_API_Key' in self.config['DEFAULT']:
+            os.environ['OPENAI_API_KEY'] = self.config['DEFAULT']['OpenAI_API_Key']
+        if 'OpenAI_API_Base' in self.config['DEFAULT']:
+            os.environ['OPENAI_API_BASE'] = self.config['DEFAULT']['OpenAI_API_Base']
 
     def __init__(self):
         # 初次运行检查运行环境是否正常
@@ -422,6 +426,8 @@ class LanguageModeGUI:
         self.MODE_DEF = 'fast'
         self.MODE_NAME_KEY_MAP = None
         self.MODE_KEY_NAME_MAP = None
+        self.OPENAI_API_KEY_DEF = ''
+        self.OPENAI_API_BASE_DEF = ''
         # 语言选择布局
         self.layout = None
         # 语言选择窗口
@@ -473,12 +479,15 @@ class LanguageModeGUI:
         self.MODE_KEY_NAME_MAP = {v: k for k, v in self.MODE_NAME_KEY_MAP.items()}
 
     def _create_layout(self):
-        interface_def, language_def, mode_def = self.parse_config(self.config_file)
+        interface_def, language_def, mode_def, api_key_def, api_base_def = self.parse_config(self.config_file)
         # 加载界面文本
         self._load_interface_text()
-        choose_language_text = self.interface_config["LanguageModeGUI"]["InterfaceLanguage"]
-        choose_sub_lang_text = self.interface_config["LanguageModeGUI"]["SubtitleLanguage"]
-        choose_mode_text = self.interface_config["LanguageModeGUI"]["Mode"]
+        lm_gui = self.interface_config["LanguageModeGUI"]
+        choose_language_text = lm_gui["InterfaceLanguage"]
+        choose_sub_lang_text = lm_gui["SubtitleLanguage"]
+        choose_mode_text = lm_gui["Mode"]
+        api_key_text = lm_gui.get("OpenAIKey", "OpenAI API Key")
+        api_base_text = lm_gui.get("OpenAIBase", "OpenAI API Base")
         self.layout = [
             # 显示选择界面语言
             [sg.Text(choose_language_text),
@@ -496,6 +505,12 @@ class LanguageModeGUI:
             [sg.Text(choose_mode_text),
              sg.DropDown(values=list(self.MODE_NAME_KEY_MAP.keys()), size=(30, 20), pad=(0, 20),
                          key='-MODE-', readonly=True, default_value=mode_def)],
+            # OpenAI API key
+            [sg.Text(api_key_text),
+             sg.Input(default_text=api_key_def, key='-OPENAI-KEY-', size=(30, 20), pad=(0, 20), password_char='*')],
+            # OpenAI API base
+            [sg.Text(api_base_text),
+             sg.Input(default_text=api_base_def, key='-OPENAI-BASE-', size=(30, 20), pad=(0, 20))],
             # 显示确认关闭按钮
             [sg.OK(), sg.Cancel()]
         ]
@@ -521,7 +536,9 @@ class LanguageModeGUI:
             print(self.interface_config["LanguageModeGUI"]["Mode"], mode_str)
             if mode_str in self.MODE_NAME_KEY_MAP:
                 mode = self.MODE_NAME_KEY_MAP[mode_str]
-            self.set_config(self.config_file, interface, language, mode)
+            api_key = values.get('-OPENAI-KEY-', '')
+            api_base = values.get('-OPENAI-BASE-', '')
+            self.set_config(self.config_file, interface, language, mode, api_key, api_base)
             if self.subtitle_extractor_gui is not None:
                 self.subtitle_extractor_gui.update_interface_text()
             self.window.close()
@@ -534,20 +551,28 @@ class LanguageModeGUI:
             config = configparser.ConfigParser()
             if os.path.exists(self.config_file):
                 config.read(self.config_file, encoding='utf-8')
-                self.set_config(self.config_file, values['-INTERFACE-'], config['DEFAULT']['Language'],
-                                config['DEFAULT']['Mode'])
+                self.set_config(
+                    self.config_file,
+                    values['-INTERFACE-'],
+                    config['DEFAULT']['Language'],
+                    config['DEFAULT']['Mode'],
+                    config['DEFAULT'].get('OpenAI_API_Key', ''),
+                    config['DEFAULT'].get('OpenAI_API_Base', ''),
+                )
             self.window.close()
             title = self._create_layout()
             self.window = sg.Window(title=title, layout=self.layout, icon=self.icon)
 
     @staticmethod
-    def set_config(config_file, interface, language_code, mode):
+    def set_config(config_file, interface, language_code, mode, api_key, api_base):
         # 写入配置文件
         with open(config_file, mode='w', encoding='utf-8') as f:
             f.write('[DEFAULT]\n')
             f.write(f'Interface = {interface}\n')
             f.write(f'Language = {language_code}\n')
             f.write(f'Mode = {mode}\n')
+            f.write(f'OpenAI_API_Key = {api_key}\n')
+            f.write(f'OpenAI_API_Base = {api_base}\n')
 
     def parse_config(self, config_file):
         if not os.path.exists(config_file):
@@ -555,21 +580,20 @@ class LanguageModeGUI:
             interface_def = self.interface_config['LanguageModeGUI']['InterfaceDefault']
             language_def = self.interface_config['LanguageModeGUI']['InterfaceDefault']
             mode_def = self.interface_config['LanguageModeGUI']['ModeFast']
-            return interface_def, language_def, mode_def
+            return interface_def, language_def, mode_def, self.OPENAI_API_KEY_DEF, self.OPENAI_API_BASE_DEF
         config = configparser.ConfigParser()
         config.read(config_file, encoding='utf-8')
         interface = config['DEFAULT']['Interface']
         language = config['DEFAULT']['Language']
         mode = config['DEFAULT']['Mode']
-        self.interface_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'backend', 'interface',
-                                           f"{self.INTERFACE_KEY_NAME_MAP[interface]}.ini")
+        api_key = config['DEFAULT'].get('OpenAI_API_Key', '')
+        api_base = config['DEFAULT'].get('OpenAI_API_Base', '')
+        self.interface_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'backend', 'interface', f"{self.INTERFACE_KEY_NAME_MAP[interface]}.ini")
         self._load_interface_text()
-        interface_def = interface if interface in self.INTERFACE_KEY_NAME_MAP else \
-            self.INTERFACE_DEF
-        language_def = self.LANGUAGE_KEY_NAME_MAP[language] if language in self.LANGUAGE_KEY_NAME_MAP else \
-            self.LANGUAGE_DEF
-        mode_def = self.MODE_KEY_NAME_MAP[mode] if mode in self.MODE_KEY_NAME_MAP else self.MODE_DEF
-        return interface_def, language_def, mode_def
+        interface_def = interface if interface in self.INTERFACE_KEY_NAME_MAP else self.INTERFACE_DEF
+        language_def = self.LANGUAGE_KEY_NAME_MAP[language] if language in self.LANGUAGE_KEY_NAME_MAP else self.LANGUAGE_DEF
+        mode_def = self.MODE_KEY_NAME_MAP[mode] if mode in self.MODE_NAME_KEY_MAP else self.MODE_DEF
+        return interface_def, language_def, mode_def, api_key, api_base
 
 
 if __name__ == '__main__':

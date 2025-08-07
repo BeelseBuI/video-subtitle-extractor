@@ -58,13 +58,25 @@ Video-subtitle-extractor (VSE) 是一款将视频中的硬字幕提取为外挂�
 
 ### 下载、翻译并烧录字幕
 
-仓库提供了一个辅助脚本，可以自动完成下载两个视频、翻译字幕并将其烧录到无字幕视频中。该脚本依赖 **yt-dlp**、**ffmpeg** 以及 [`chatgpt-subtitle-translator`](https://github.com/Cerlancism/chatgpt-subtitle-translator) 项目，需要提前安装这些工具并设置 `OPENAI_API_KEY`。
+仓库提供了一个辅助脚本，可以根据**视频标题**自动搜索原始视频和含字幕视频，提取字幕后翻译并烧录到无字幕视频中。该脚本依赖 **yt-dlp**、**ffmpeg** 以及 [`chatgpt-subtitle-translator`](https://github.com/Cerlancism/chatgpt-subtitle-translator) 项目，需要提前安装这些工具并设置 `OPENAI_API_KEY`。
+
+脚本会根据视频标题尝试多种搜索方式（如去除中文/韩文字符、添加 `sub/eng sub/sub español` 等关键词）以找到首个带字幕的视频，并根据下载视频的标题自动判断字幕语言（例如标题包含 `[ENG]` 或 `[Sub Español]`），同时会根据视频分辨率自动推断字幕搜索区域。例如，1080p 视频的默认区域为 `843 1070 0 1920`。
 
 ```bash
-python scripts/translate_burn.py <含字幕视频链接> <无字幕视频链接> output.mp4
+python scripts/translate_burn.py "140327 슈가&지민, 제이홉&뷔&정국, 랩몬&진" output.mp4
 ```
 
 临时文件默认保存在 `work/` 目录，可通过 `--workdir` 参数修改。
+
+若需将生成的视频通过 Telegram 私聊发送给用户，可额外提供 `--telegram-token` 与 `--telegram-chat-id` 参数。
+
+也可以通过一个简单的网页界面运行整个流程。启动服务器：
+
+```bash
+python scripts/web_server.py --output output.mp4
+```
+
+在浏览器访问 <http://127.0.0.1:5000>，输入视频标题即可开始处理。其他设置（如输出路径、工作目录或 Telegram 参数）可在启动服务器前通过命令行修改。
 
 
 - 视频以及程序路径请**不要带中文和空格**，否则可能出现未知错误！！！

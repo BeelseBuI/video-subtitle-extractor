@@ -1,4 +1,4 @@
-简体中文 | [English](README_en.md)
+简体中文 | [English](README_en.md) | [Русский](README_ru.md)
 
 ## 项目简介
 

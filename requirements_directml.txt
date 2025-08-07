@@ -1,3 +1,6 @@
 paddle2onnx==2.0.1
 onnxruntime-gpu==1.22.0
 onnxruntime-directml==1.22.0
+requests==2.32.3
+yt-dlp==2025.1.26
+flask==3.1.1

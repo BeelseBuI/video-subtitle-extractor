@@ -62,5 +62,5 @@ def main():
     app.run(host=args.host, port=args.port)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":␊
     main()

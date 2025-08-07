@@ -77,7 +77,12 @@ python scripts/web_server.py --output output.mp4
 ```
 
 在浏览器访问 <http://127.0.0.1:5000>，输入视频标题即可开始处理。其他设置（如输出路径、工作目录或 Telegram 参数）可在启动服务器前通过命令行修改。
+此外，提供了图形化启动脚本 `scripts/host_gui.py`，可自动安装依赖、保存设置并一键启动上述网页服务。可以使用 PyInstaller 将其打包成 Windows 下的独立可执行文件：
 
+```bash
+pip install pyinstaller
+pyinstaller --onefile scripts/host_gui.py
+```
 
 - 视频以及程序路径请**不要带中文和空格**，否则可能出现未知错误！！！
 

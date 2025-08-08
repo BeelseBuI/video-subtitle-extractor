@@ -32,16 +32,16 @@ def _get_title(query: str) -> str:
 
 def _download(query: str, output: Path) -> None:
     """Download the first search result for *query* to *output*."""
-    run(
-        [
-            "yt-dlp",
-            "-f",
-            "bestvideo[height>=1080]+bestaudio/best[height>=1080]",
-            "-o",
-            str(output),
-            f"ytsearch1:{query}",
-        ]
-    )
+    # пусть output = Path("sub_video")  — без расширения
+    out_tpl = str(output) + ".%(ext)s"
+    run([
+        "yt-dlp",
+        "-f", "bestvideo+bestaudio/best",
+        "--merge-output-format", "mp4",
+        "-o", out_tpl,
+        f"ytsearch1:{query}"
+    ])
+
 
 
 def _strip_non_latin(text: str) -> str:
@@ -213,8 +213,8 @@ def process(
 ) -> None:
     """Run the full download/translate/burn pipeline for *title*."""
     workdir.mkdir(parents=True, exist_ok=True)
-    sub_video = workdir / "sub_video.mp4"
-    clean_video = workdir / "clean_video.mp4"
+    sub_video = workdir / "sub_video"
+    clean_video = workdir / "clean_video"
     raw_srt = workdir / "raw.srt"
     translated_srt = workdir / "translated.srt"
 
@@ -226,9 +226,9 @@ def process(
         os.environ["OPENAI_API_KEY"] = openai_api_key
     if openai_api_base:
         os.environ["OPENAI_API_BASE"] = openai_api_base
-    extract_subtitles(sub_video, raw_srt)
+    extract_subtitles(sub_video.with_suffix(".mp4"), raw_srt)
     translate_subtitles(raw_srt, translated_srt, lang)
-    burn_subtitles(clean_video, translated_srt, output)
+    burn_subtitles(clean_video.with_suffix(".mp4"), translated_srt, output)
 
     if telegram_token and telegram_chat_id:
         send_telegram(output, telegram_token, telegram_chat_id)

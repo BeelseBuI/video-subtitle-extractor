@@ -3,6 +3,12 @@ from pathlib import Path
 
 from flask import Flask, render_template_string, request
 
+import sys
+# добавляем в пути корень проекта (папку над scripts/)
+PROJECT_ROOT = Path(__file__).parent.parent.resolve()
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from translate_burn import process
 
 HTML = """
@@ -62,5 +68,5 @@ def main():
     app.run(host=args.host, port=args.port)
 
 
-if __name__ == "__main__":␊
+if __name__ == "__main__":
     main()

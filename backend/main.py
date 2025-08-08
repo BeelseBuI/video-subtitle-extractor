@@ -31,6 +31,37 @@ import platform
 import multiprocessing
 import time
 import pysrt
+import argparse
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Video subtitle extractor"
+    )
+    parser.add_argument(
+        "-v", "--video-path",
+        required=True,
+        help="Full path to the input video file"
+    )
+    parser.add_argument(
+        "-a", "--subtitle-area",
+        required=False,
+        nargs=4, type=int,
+        metavar=("YMIN", "YMAX", "XMIN", "XMAX"),
+        help="Subtitle crop area: ymin ymax xmin xmax"
+    )
+    parser.add_argument(
+        "-l", "--lang",
+        default=config.interface_config['Main']['RecSubLang'],
+        help="Subtitle language code"
+    )
+    parser.add_argument(
+        "-m", "--mode",
+        choices=("fast","accurate"),
+        default=config.MODE_TYPE,
+        help="OCR mode"
+    )
+    return parser.parse_args()
+
 
 
 class SubtitleDetect:
@@ -1010,16 +1041,19 @@ class SubtitleExtractor:
 
 if __name__ == '__main__':
     multiprocessing.set_start_method("spawn")
-    # 提示用户输入视频路径
-    video_path = input(f"{config.interface_config['Main']['InputVideo']}").strip()
-    # 提示用户输入字幕区域
-    try:
-        y_min, y_max, x_min, x_max = map(int, input(
-            f"{config.interface_config['Main']['ChooseSubArea']} (ymin ymax xmin xmax)：").split())
+    # вместо input() берём значения из CLI
+    args = parse_args()
+    video_path = args.video_path
+    if args.subtitle_area:
+        y_min, y_max, x_min, x_max = args.subtitle_area
         subtitle_area = (y_min, y_max, x_min, x_max)
-    except ValueError as e:
+    else:
         subtitle_area = None
-    # 新建字幕提取对象
+
+    # Если хотите, можно проконтролировать язык и режим:
+    config.REC_CHAR_TYPE = args.lang
+    config.MODE_TYPE     = args.mode
+
     se = SubtitleExtractor(video_path, subtitle_area)
-    # 开始提取字幕
     se.run()
+

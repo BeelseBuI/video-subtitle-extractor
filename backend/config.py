@@ -12,9 +12,9 @@ import os
 import re
 import time
 from pathlib import Path
-from fsplit.filesplit import Filesplit
+from filesplit.split import Split as Filesplit
 import paddle
-from tools.constant import *
+from backend.tools.constant import *
 
 # 项目版本号
 VERSION = "2.0.3"

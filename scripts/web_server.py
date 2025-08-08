@@ -13,13 +13,74 @@ from translate_burn import process
 
 HTML = """
 <!doctype html>
-<title>Subtitle Translator</title>
-<h1>Enter video title</h1>
-<form method="post">
-  <input type="text" name="title" required>
-  <input type="submit" value="Run">
-</form>
-{% if message %}<p>{{ message }}</p>{% endif %}
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Subtitle Translator</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Segoe UI', Roboto, Oxygen,
+        Ubuntu, Cantarell, 'Open Sans', sans-serif;
+      background-color: #f5f5f7;
+      color: #1d1d1f;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    .card {
+      background: #fff;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 100%;
+      max-width: 480px;
+    }
+    h1 {
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 20px;
+      margin: 8px 0;
+      box-sizing: border-box;
+      border: 1px solid #d2d2d7;
+      border-radius: 12px;
+      font-size: 16px;
+    }
+    input[type="submit"] {
+      background-color: #0071e3;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    input[type="submit"]:hover {
+      background-color: #005bb5;
+    }
+    p.message {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Subtitle Translator</h1>
+    <form method="post">
+      <input type="text" name="title" placeholder="Enter video title" required>
+      <input type="submit" value="Run">
+    </form>
+    {% if message %}<p class="message">{{ message }}</p>{% endif %}
+  </div>
+</body>
+</html>
 """
 
 
@@ -54,7 +115,7 @@ def main():
     parser.add_argument("--telegram-token", help="Telegram bot token")
     parser.add_argument("--telegram-chat-id", help="Telegram chat ID")
     parser.add_argument("--host", default="127.0.0.1", help="Host for the web server")
-    parser.add_argument("--port", type=int, default=5000, help="Port for the web server")
+    parser.add_argument("--port", type=int, default=30000, help="Port for the web server")
     args = parser.parse_args()
 
     cfg = {

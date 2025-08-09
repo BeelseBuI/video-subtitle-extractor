@@ -1,16 +1,16 @@
+import os
+import sys
 import argparse
 from pathlib import Path
-
 from flask import Flask, render_template_string, request
 
-import sys
-# добавляем в пути корень проекта (папку над scripts/)
+# --- добавить корень проекта в sys.path (папка над scripts/) ---
 PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from translate_burn import process
-
+# импорт твоей функции обработки
+from translate_burn import process  # noqa: E402
 HTML = """
 <!doctype html>
 <html lang="en">
@@ -84,26 +84,25 @@ HTML = """
 """
 
 
-def create_app(cfg):
+def create_app(cfg: dict) -> Flask:
     app = Flask(__name__)
 
     @app.route("/", methods=["GET", "POST"])
     def index():
         if request.method == "POST":
-            title = request.form["title"].strip()
+            title = (request.form.get("title") or "").strip()
+            out = (request.form.get("output") or cfg["output"])
+            work = (request.form.get("workdir") or cfg["workdir"])
+            t_token = request.form.get("telegram_token") or cfg.get("telegram_token")
+            t_chat = request.form.get("telegram_chat_id") or cfg.get("telegram_chat_id")
+
             try:
-                process(
-                    title,
-                    cfg["output"],
-                    cfg["workdir"],
-                    cfg.get("telegram_token"),
-                    cfg.get("telegram_chat_id"),
-                )
-                msg = "Processing completed"
-            except Exception as exc:  # pragma: no cover - user-facing error
-                msg = f"Error: {exc}"
-            return render_template_string(HTML, message=msg)
-        return render_template_string(HTML, message=None)
+                process(title, out, work, t_token, t_chat)
+                return render_template_string(HTML, message="Processing completed ✅", error=False)
+            except Exception as exc:  # pragma: no cover – пользовательский сценарий
+                return render_template_string(HTML, message=f"Error: {exc}", error=True)
+
+        return render_template_string(HTML, message=None, error=False)
 
     return app
 
@@ -114,8 +113,10 @@ def main():
     parser.add_argument("--workdir", default="work", help="Working directory")
     parser.add_argument("--telegram-token", help="Telegram bot token")
     parser.add_argument("--telegram-chat-id", help="Telegram chat ID")
-    parser.add_argument("--host", default="127.0.0.1", help="Host for the web server")
-    parser.add_argument("--port", type=int, default=30000, help="Port for the web server")
+    parser.add_argument("--host", default=os.getenv("HOST", "127.0.0.1"),
+                        help="Host for the web server (use 0.0.0.0 to expose externally)")
+    parser.add_argument("--port", type=int, default=int(os.getenv("PORT", "30000")),
+                        help="Port for the web server")
     args = parser.parse_args()
 
     cfg = {
@@ -126,7 +127,7 @@ def main():
     }
 
     app = create_app(cfg)
-    app.run(host=args.host, port=args.port)
+    app.run(host=args.host, port=args.port, debug=False)
 
 
 if __name__ == "__main__":

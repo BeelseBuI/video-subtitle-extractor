@@ -134,10 +134,16 @@ def extract_subtitles(video: Path, output: Path) -> None:
     sub_area = calc_subtitle_area(width, height)
     from backend.main import SubtitleExtractor
 
+    generated = video.with_suffix(".srt")
+    # Remove any stale subtitles before running extractor to avoid reuse
+    generated.unlink(missing_ok=True)
+    output.unlink(missing_ok=True)
+
     extractor = SubtitleExtractor(str(video), sub_area=sub_area)
     extractor.run()
-    generated = video.with_suffix(".srt")
-    generated.rename(output)
+    if not generated.exists():
+        raise FileNotFoundError(f"{generated} was not created")
+    generated.replace(output)
 
 
 LANG_MAP = {
